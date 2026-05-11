@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input[type="email"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .options {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .overall-status {
+            text-align: center;
+            padding: 30px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .status-valid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-invalid {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .status-undetermined {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .phase {
+            border-left: 5px solid #ddd;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .phase.passed {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .phase.failed {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .phase.greylisted {
+            border-left-color: #f59e0b;
+            background: #fffbf0;
+        }
+
+        .phase h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phase-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .phase-status.passed {
+            background: #10b981;
+            color: white;
+        }
+
+        .phase-status.failed {
+            background: #ef4444;
+            color: white;
+        }
+
+        .phase-status.greylisted {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .mx-records {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .mx-records ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .mx-records li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .mx-records li:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ef4444;
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="emoji">✉️</span> Email Verification</h1>
+            <p>Lightweight • Open-Source • Zero Paid APIs</p>
+        </div>
+
+        <div class="content">
+            <div class="input-group">
+                <input 
+                    type="email" 
+                    id="emailInput" 
+                    placeholder="Enter email address (e.g., user@example.com)"
+                    autocomplete="off"
+                >
+                <button id="verifyBtn" onclick="verifyEmail()">
+                    <span class="emoji">🔍</span> Verify
+                </button>
+            </div>
+
+            <div class="options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="webPresenceCheck" checked>
+                    <label for="webPresenceCheck" style="margin: 0; cursor: pointer;">
+                        Check Web Presence (Phase 4) - Gravatar & Public Records
+                    </label>
+                </div>
+            </div>
+
+            <div id="errorContainer"></div>
+
+            <div id="loadingContainer" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Verifying email...</p>
+            </div>
+
+            <div id="resultsContainer" class="results"></div>
+        </div>
+
+        <div class="footer">
+            <p><span class="emoji">🔒</span> <strong>Privacy:</strong> Runs locally. No data stored. Only DNS and SMTP connections made.</p>
+            <p><span class="emoji">📖</span> Built with Python, dnspython, and Flask</p>
+        </div>
+    </div>
+
+    <script>
+        async function verifyEmail() {
+            const emailInput = document.getElementById('emailInput');
+            const email = emailInput.value.trim();
+            const webPresenceCheck = document.getElementById('webPresenceCheck').checked;
+            const errorContainer = document.getElementById('errorContainer');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            // Clear previous results
+            errorContainer.innerHTML = '';
+            resultsContainer.innerHTML = '';
+
+            // Validate input
+            if (!email) {
+                errorContainer.innerHTML = '<div class="error"><strong>Error:</strong> Please enter an email address</div>';
+                return;
+            }
+
+            // Show loading
+            loadingContainer.style.display = 'block';
+            resultsContainer.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        check_web_presence: webPresenceCheck
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    errorContainer.innerHTML = `<div class="error"><strong>Error:</strong> ${error.error || 'Verification failed'}</div>`;
+                    loadingContainer.style.display = 'none';
+                    return;
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                errorContainer.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+            } finally {
+                loadingContainer.style.display = 'none';
+            }
+        }
+
+        function displayResults(result) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const statusEmoji = {
+                'valid': '✅',
+                'invalid': '❌',
+                'undetermined': '⚠️',
+                'unknown': '❓',
+                'error': '⚠️'
+            };
+
+            const statusClass = {
+                'valid': 'status-valid',
+                'invalid': 'status-invalid',
+                'undetermined': 'status-undetermined'
+            };
+
+            let html = `
+                <div class="overall-status">
+                    <h2>${statusEmoji[result.overall_status] || '❓'} Overall Status</h2>
+                    <div class="status-badge ${statusClass[result.overall_status] || ''}">
+                        ${result.overall_status.toUpperCase()}
+                    </div>
+                </div>
+            `;
+
+            // Phase 1
+            const phase1 = result.phase_1;
+            const phase1Class = phase1.status === 'passed' ? 'passed' : phase1.status === 'failed' ? 'failed' : '';
+            html += `
+                <div class="phase ${phase1Class}">
+                    <h3>
+                        <span>Phase 1: Syntax Validation</span>
+                        <span class="phase-status ${phase1.status === 'passed' ? 'passed' : 'failed'}">
+                            ${phase1.status.toUpperCase()}
+                        </span>
+                    </h3>
+                    <p>${phase1.message}</p>
+                </div>
+            `;
+
+            // Phase 2
+            const phase2 = result.phase_2;
+            const phase2Class = phase2.status === 'passed' ? 'passed' : phase2.status === 'failed' ? 'failed' : '';
+            let phase2Html = `
+                <div class="phase ${phase2Class}">
+                    <h3>
+                        <span>Phase 2: Domain/MX Record Check</span>
+                        <span class="phase-status ${phase2.status === 'passed' ? 'passed' : 'failed'}">
+                            ${phase2.status.toUpperCase()}
+                        </span>
+                    </h3>
+                    <p>${phase2.message}</p>
+            `;
+            
+            if (phase2.mx_records && phase2.mx_records.length > 0) {
+                phase2Html += '<div class="mx-records"><strong>MX Records:</strong><ul>';
+                phase2.mx_records.forEach(mx => {
+                    phase2Html += `<li>${mx.host} (Priority: ${mx.priority})</li>`;
+                });
+                phase2Html += '</ul></div>';
+            }
+            
+            phase2Html += '</div>';
+            html += phase2Html;
+
+            // Phase 3
+            const phase3 = result.phase_3;
+            const phase3Class = phase3.status === 'passed' ? 'passed' : phase3.status === 'greylisted' ? 'greylisted' : phase3.status === 'failed' ? 'failed' : '';
+            html += `
+                <div class="phase ${phase3Class}">
+                    <h3>
+                        <span>Phase 3: SMTP Handshake</span>
+                        <span class="phase-status ${phase3.status === 'passed' ? 'passed' : 'failed'}">
+                            ${phase3.status.toUpperCase()}
+                        </span>
+                    </h3>
+                    <p>${phase3.message}</p>
+                    ${phase3.server ? `<p><strong>Server:</strong> ${phase3.server}</p>` : ''}
+                </div>
+            `;
+
+            // Phase 4 (if checked)
+            if (document.getElementById('webPresenceCheck').checked) {
+                const phase4 = result.phase_4;
+                const phase4Class = phase4.status === 'found' ? 'passed' : phase4.status === 'not_found' ? 'failed' : '';
+                html += `
+                    <div class="phase ${phase4Class}">
+                        <h3>
+                            <span>Phase 4: Web Presence Search</span>
+                            <span class="phase-status ${phase4.status === 'found' ? 'passed' : 'failed'}">
+                                ${phase4.status.toUpperCase()}
+                            </span>
+                        </h3>
+                        <p>${phase4.message}</p>
+                    </div>
+                `;
+            }
+
+            resultsContainer.innerHTML = html;
+            resultsContainer.classList.add('show');
+        }
+
+        // Allow Enter key to trigger verification
+        document.getElementById('emailInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                verifyEmail();
+            }
+        });
+    </script>
+</body>
+</html>
