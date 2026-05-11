@@ -1,38 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Free Email Verifier</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Email Verifier | MX, SMTP, and Gravatar Check</title>
+  <meta name="description" content="Verify email addresses for free with syntax validation, MX lookup, SMTP handshake, and Gravatar presence. Deployable on Vercel with a Python API." />
+  <meta name="keywords" content="email verifier, email validation, MX record check, SMTP check, Gravatar lookup, Vercel Python, free email verification" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Free Email Verifier | MX, SMTP, and Gravatar Check" />
+  <meta property="og:description" content="Verify email addresses instantly with a modern email validation tool that checks syntax, MX records, SMTP server responses, and web presence." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://vercel.com/supercharge?limit=1" />
+  <meta property="og:image:alt" content="Email verification service" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Free Email Verifier" />
+  <meta name="twitter:description" content="Verify email addresses instantly with a modern email validation tool that checks syntax, MX, SMTP, and web presence." />
+  <meta name="theme-color" content="#4f46e5" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Free Email Verifier",
+    "url": "https://your-vercel-domain.vercel.app/",
+    "description": "Verify email addresses instantly with syntax validation, MX lookup, SMTP handshake, and web presence checks.",
+    "keywords": "email verifier, email validation, MX lookup, SMTP check, Gravatar lookup, Vercel Python"
+  }
+  </script>
   <style>
-    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #eef2ff; color: #111827; }
-    .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .card { background: #ffffff; border-radius: 24px; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); padding: 28px; }
-    h1 { margin-bottom: 12px; font-size: 2.2rem; }
-    p { margin: 0 0 20px; color: #475569; }
-    input, button { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 1rem; }
-    button { background: #4338ca; color: white; border: none; cursor: pointer; transition: background 0.2s ease; }
-    button:hover { background: #3730a3; }
-    label { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 0.95rem; color: #334155; }
-    .results { margin-top: 24px; }
-    .status { padding: 16px; border-radius: 16px; background: #eef2ff; margin-bottom: 16px; }
-    .status.valid { border-left: 4px solid #22c55e; }
-    .status.invalid { border-left: 4px solid #ef4444; }
-    .status.undetermined { border-left: 4px solid #f59e0b; }
-    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95rem; white-space: pre-wrap; background: #f8fafc; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; }
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { margin: 0; min-height: 100vh; }
+
+    .hero {
+      display: grid;
+      place-items: center;
+      padding: 80px 24px 40px;
+      background: radial-gradient(circle at top, rgba(99, 102, 241, 0.16), transparent 36%),
+                  linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero-grid {
+      display: grid;
+      gap: 32px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      align-items: center;
+    }
+
+    .hero-copy h1 {
+      margin: 0 0 18px;
+      font-size: clamp(2.5rem, 4vw, 4rem);
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy p {
+      max-width: 620px;
+      margin: 0 0 28px;
+      color: #334155;
+      font-size: 1.05rem;
+    }
+
+    .badge-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .badge-list li {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(99, 102, 241, 0.16);
+      background: #ffffff;
+      color: #111827;
+      font-weight: 500;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 40px 90px rgba(15, 23, 42, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      padding: 32px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      color: #111827;
+    }
+
+    .input-group {
+      display: grid;
+      gap: 14px;
+    }
+
+    input[type='email'] {
+      width: 100%;
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid #cbd5e1;
+      outline-offset: 4px;
+      font-size: 1rem;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #334155;
+      font-size: 0.98rem;
+    }
+
+    input[type='checkbox'] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4338ca;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 18px 22px;
+      color: white;
+      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 40px rgba(67, 56, 202, 0.22);
+    }
+
+    .results {
+      margin-top: 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .status {
+      border-radius: 20px;
+      padding: 18px;
+      background: #eef2ff;
+      font-weight: 600;
+    }
+
+    .status.valid { border-left: 5px solid #22c55e; }
+    .status.invalid { border-left: 5px solid #ef4444; }
+    .status.undetermined { border-left: 5px solid #f59e0b; }
+
+    .code {
+      padding: 18px;
+      border-radius: 20px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      white-space: pre-wrap;
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    .feature-grid {
+      display: grid;
+      gap: 18px;
+      margin-top: 32px;
+    }
+
+    .feature-card {
+      padding: 22px;
+      border-radius: 22px;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.96rem;
+    }
+
+    footer {
+      margin: 64px auto 28px;
+      max-width: 720px;
+      color: #64748b;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .hero-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .hero { padding: 60px 16px 30px; }
+      .card { padding: 24px; }
+      button { padding: 16px 20px; }
+    }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="card">
-      <h1>Free Email Verifier</h1>
-      <p>Deployable on Vercel with a serverless Python API. Enter an email and verify it through syntax, MX, SMTP, and web presence.</p>
-      <input id="email" type="email" placeholder="example@domain.com" autocomplete="off" />
-      <label><input id="presence" type="checkbox" checked /> Check web presence (Gravatar)</label>
-      <button onclick="verifyEmail()">Verify Email</button>
-      <div id="feedback" class="results"></div>
+  <main class="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <section class="hero-copy">
+          <span style="display:inline-flex; align-items:center; gap:10px; color:#4338ca; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; font-size:0.85rem;">Fast email validation</span>
+          <h1>Verify email addresses instantly with syntax, MX, SMTP, and profile checks.</h1>
+          <p>Use this free email verifier to validate addresses before signup, improve deliverability, and reduce form spam. Built for Vercel with a lightweight Python API and clean UX.</p>
+          <ul class="badge-list">
+            <li>RFC 5322 syntax validation</li>
+            <li>MX and SMTP server verification</li>
+            <li>Gravatar profile presence</li>
+          </ul>
+        </section>
+
+        <section class="card" aria-labelledby="verification-form-title">
+          <h2 id="verification-form-title">Verify an email</h2>
+          <div class="input-group">
+            <label for="email" style="font-weight:600; color:#0f172a;">Email address</label>
+            <input id="email" type="email" placeholder="name@company.com" autocomplete="off" />
+            <div class="checkbox-row">
+              <label><input id="presence" type="checkbox" checked /> Check web presence (Gravatar)</label>
+            </div>
+            <button type="button" onclick="verifyEmail()">Verify Email</button>
+          </div>
+          <div id="feedback" class="results" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <section class="feature-grid" aria-label="Verification features">
+        <article class="feature-card">
+          <h3>Syntax validation</h3>
+          <p>Checks whether the address conforms to RFC 5322 formatting rules and prevents invalid signups.</p>
+        </article>
+        <article class="feature-card">
+          <h3>MX and SMTP checks</h3>
+          <p>Verifies that the domain accepts email and attempts an SMTP recipient check for better accuracy.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Web presence lookup</h3>
+          <p>Looks for a Gravatar profile to confirm whether the email is associated with a public identity.</p>
+        </article>
+      </section>
     </div>
-  </div>
+  </main>
+
+  <footer>
+    Free Email Verifier — built for fast deployment, low friction validation, and modern SEO.
+  </footer>
+
   <script>
     async function verifyEmail() {
       const email = document.getElementById('email').value.trim();
@@ -54,7 +303,18 @@
           body: JSON.stringify({ email, check_web_presence: presence })
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+
+        if (!contentType.includes('application/json')) {
+          throw new Error(text || 'Server did not return JSON.');
+        }
+
+        const result = JSON.parse(text);
+        if (!response.ok) {
+          throw new Error(result.message || result.error || 'Verification failed.');
+        }
+
         const statusClass = result.overall_status === 'valid' ? 'valid' : result.overall_status === 'invalid' ? 'invalid' : 'undetermined';
 
         feedback.innerHTML = `<div class="status ${statusClass}"><strong>Overall Status:</strong> ${result.overall_status.toUpperCase()}</div>`;

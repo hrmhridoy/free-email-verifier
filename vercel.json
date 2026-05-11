@@ -5,7 +5,7 @@
     { "src": "index.html", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/verify", "dest": "/api/verify.py" },
+    { "src": "/api/verify", "methods": ["GET", "POST"], "dest": "/api/verify.py" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
